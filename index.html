@@ -1,0 +1,101 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Simulasi KPR Lanjutan</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 text-gray-800 p-6">
+  <div class="max-w-2xl mx-auto bg-white p-6 rounded-2xl shadow-lg">
+    <h1 class="text-2xl font-bold mb-4 text-center">Simulasi KPR + Analisis</h1>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <label class="font-semibold">Harga Rumah (Rp)</label>
+        <input id="hargaRumah" type="number" class="w-full p-2 border rounded" placeholder="cth: 500000000">
+      </div>
+      <div>
+        <label class="font-semibold">Uang Muka (Rp)</label>
+        <input id="uangMuka" type="number" class="w-full p-2 border rounded" placeholder="cth: 100000000">
+      </div>
+      <div>
+        <label class="font-semibold">Bunga FIX (% per tahun)</label>
+        <input id="bungaFix" type="number" class="w-full p-2 border rounded" placeholder="cth: 5">
+      </div>
+      <div>
+        <label class="font-semibold">Periode FIX (tahun)</label>
+        <input id="tahunFix" type="number" class="w-full p-2 border rounded" placeholder="cth: 3">
+      </div>
+      <div>
+        <label class="font-semibold">Bunga FLOATING (% per tahun)</label>
+        <input id="bungaFloating" type="number" class="w-full p-2 border rounded" placeholder="cth: 10">
+      </div>
+      <div>
+        <label class="font-semibold">Jangka Waktu Total (tahun)</label>
+        <input id="tahunTotal" type="number" class="w-full p-2 border rounded" placeholder="cth: 15">
+      </div>
+    </div>
+
+    <button onclick="hitungSimulasi()" class="mt-4 w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">Hitung</button>
+
+    <div id="hasil" class="mt-6 text-gray-800 text-base"></div>
+  </div>
+
+  <script>
+    function hitungSimulasi() {
+      const hargaRumah = parseFloat(document.getElementById('hargaRumah').value);
+      const uangMuka = parseFloat(document.getElementById('uangMuka').value);
+      const bungaFix = parseFloat(document.getElementById('bungaFix').value);
+      const tahunFix = parseFloat(document.getElementById('tahunFix').value);
+      const bungaFloating = parseFloat(document.getElementById('bungaFloating').value);
+      const tahunTotal = parseFloat(document.getElementById('tahunTotal').value);
+
+      const jumlahPinjaman = hargaRumah - uangMuka;
+      const bulanFix = tahunFix * 12;
+      const bulanTotal = tahunTotal * 12;
+      const bulanFloating = bulanTotal - bulanFix;
+
+      const bungaBulananFix = bungaFix / 12 / 100;
+      const bungaBulananFloating = bungaFloating / 12 / 100;
+
+      const angsuranFix = (jumlahPinjaman * bungaBulananFix) / (1 - Math.pow(1 + bungaBulananFix, -bulanTotal));
+      const totalBayarFix = angsuranFix * bulanFix;
+
+      let sisaPokok = jumlahPinjaman;
+      for (let i = 0; i < bulanFix; i++) {
+        const bunga = sisaPokok * bungaBulananFix;
+        const pokok = angsuranFix - bunga;
+        sisaPokok -= pokok;
+      }
+
+      const angsuranFloating = (sisaPokok * bungaBulananFloating) / (1 - Math.pow(1 + bungaBulananFloating, -bulanFloating));
+      const totalBayarFloating = angsuranFloating * bulanFloating;
+
+      const totalAngsuran = totalBayarFix + totalBayarFloating;
+
+      let saran = "";
+      const rasioCicilan = totalAngsuran / hargaRumah;
+
+      if (rasioCicilan > 1.5) {
+        saran = "💡 <b>Saran:</b> Total cicilan jauh lebih besar dari harga rumah, pertimbangkan mencari bunga lebih rendah atau memperbesar uang muka.";
+      } else if (rasioCicilan > 1.2) {
+        saran = "💡 <b>Saran:</b> Cicilan relatif besar, pertimbangkan menambah uang muka atau memperpendek tenor.";
+      } else {
+        saran = "✅ <b>Saran:</b> Skema KPR cukup sehat secara finansial.";
+      }
+
+      document.getElementById("hasil").innerHTML = `
+        <h2 class="text-xl font-semibold mb-2">Hasil Perhitungan</h2>
+        <p>Jumlah Pinjaman: <strong>Rp ${jumlahPinjaman.toLocaleString()}</strong></p>
+        <p>Angsuran FIX: <strong>Rp ${angsuranFix.toFixed(0).toLocaleString()}</strong> /bulan selama ${tahunFix} tahun</p>
+        <p>Angsuran FLOATING: <strong>Rp ${angsuranFloating.toFixed(0).toLocaleString()}</strong> /bulan selama ${tahunTotal - tahunFix} tahun</p>
+        <p>Total Pembayaran Selama KPR: <strong>Rp ${totalAngsuran.toFixed(0).toLocaleString()}</strong></p>
+        <hr class="my-4">
+        ${saran}
+      `;
+    }
+  </script>
+</body>
+</html>
